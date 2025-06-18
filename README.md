@@ -1,2 +1,0 @@
-# electrik-cuy
-FullStack Laravel
