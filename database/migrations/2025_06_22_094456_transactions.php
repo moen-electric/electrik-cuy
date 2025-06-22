@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->string('status');
+            $table->string('order_id');
+            $table->string('gross_amount');
+            $table->string('pdf_url')->nullable();
             $table->timestamps();
         });
     }

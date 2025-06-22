@@ -13,6 +13,12 @@ return new class extends Migration
     {
         Schema::create('reviews', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->foreignId('transaction_id')->references('id')->on('transactions')->onDelete('cascade');
+            $table->foreignId('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->string('image')->nullable();
+            $table->string('ulasan')->nullable();
+            $table->string('bintang');
             $table->timestamps();
         });
     }
