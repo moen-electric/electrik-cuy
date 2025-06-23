@@ -14,9 +14,7 @@ class TransactionsController extends Controller
     public function index(Carts $cart, Request $request)
     {
         $product= Products::where('id', $cart->product)->get();
-
         $jumlahBeli = $request->jumlah;
-
         foreach($product as $product) {
             $harga = $product->harga * $jumlahBeli;
         }
@@ -49,11 +47,8 @@ class TransactionsController extends Controller
             ),
         );
         // return $params;
-
         $snapToken = \Midtrans\Snap::getSnapToken($params);
-
         // return $snapToken;;
-
         return view('user.transaction.index', [
             'harga' => $harga,
             'product' => $product,
@@ -69,21 +64,16 @@ class TransactionsController extends Controller
         // return $validatedData2;
         $json= json_decode($request->get('json'));
         // return $json;
-
-        $validatedData['user_id'] = auth()->user()->id;
+        $validatedData['user_id'] = Auth::user()->id;
         $validatedData['product_id'] = $cart->product_id;
         $validatedData['status'] = $json->transaction_status;
         $validatedData['order_id'] = $json->order_id;
         $validatedData['gross_amount'] = $json->gross_amount;
         $validatedData['pdf_url'] = $json->pdf_url ?? null;
         // return $validatedData;
-
         Transactions::create($validatedData);
-
         $validatedData2['stok'] =$cart->product->stok - $cart->jumlah;
-
         Products::where('id', $cart->product->id)->update($validatedData2);
-
         $cart->delete();
 
         return redirect('/purchases')->with('success', 'Your order has been created');
