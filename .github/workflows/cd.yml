@@ -1,9 +1,7 @@
-name: Deploy Laravel to cPanel
+name: Deploy Laravel to cPanel (FTP Only)
 
 on:
   push:
-    branches: [ production ]
-  pull_request:
     branches: [ production ]
 
 jobs:
@@ -13,27 +11,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    
-    - name: Setup PHP
-      uses: shivammathur/setup-php@v2
-      with:
-        php-version: '8.1'
-        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
-    
-    - name: Install Composer dependencies
-      run: composer install --no-progress --no-suggest --no-interaction --prefer-dist --optimize-autoloader
-    
-    - name: Create .env file
-      run: |
-        cp .env.example .env
-        php artisan key:generate
-    
-    - name: Run tests
-      run: |
-        php artisan config:cache
-        php artisan route:cache
-        php artisan view:cache
-        # php artisan test # uncomment jika ada tests
     
     - name: Deploy to cPanel via FTP
       uses: SamKirkland/FTP-Deploy-Action@4.3.3
@@ -47,6 +24,7 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
+          **/vendor/**
           tests/
           .env.example
           .gitignore
@@ -54,52 +32,32 @@ jobs:
           README.md
           package*.json
           webpack.mix.js
-          artisan
           **/.DS_Store
+          composer.lock
     
-    - name: Setup environment and permissions via SSH
-      uses: appleboy/ssh-action@v0.1.5
+    - name: Create deployment info file
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
       with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USERNAME }}
-        password: ${{ secrets.SSH_PASSWORD }}
-        port: ${{ secrets.SSH_PORT }}
-        script: |
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /public_html/
+        exclude: |
+          **/*
+        include: |
+          deployment-info.txt
+        dry-run: false
+      env:
+        DEPLOYMENT_INFO: |
+          Deployment completed at: $(date)
+          Please run the following commands manually in cPanel Terminal:
+          
           cd /home/lxrapdcy/public_html
-          
-          # Set proper permissions
-          find . -type f -exec chmod 644 {} \;
-          find . -type d -exec chmod 755 {} \;
-          chmod -R 775 storage
-          chmod -R 775 bootstrap/cache
-          
-          # Remove old storage link if exists
-          if [ -L "public/storage" ]; then
-            rm public/storage
-          fi
-          
-          # Create symbolic link for storage
+          composer install --no-dev --optimize-autoloader
           php artisan storage:link
-          
-          # Verify storage link created
-          if [ ! -L "public/storage" ]; then
-            ln -s ../storage/app/public public/storage
-          fi
-          
-          # Clear and cache config
-          php artisan config:clear
-          php artisan cache:clear
-          php artisan view:clear
-          php artisan route:clear
-          
-          # Cache for production
           php artisan config:cache
           php artisan route:cache
           php artisan view:cache
-          
-          # Run migrations if needed
-          # php artisan migrate --force
-          
-          # Fix storage permissions again after storage:link
           chmod -R 775 storage
           chmod -R 775 public/storage
