@@ -1,0 +1,43 @@
+name: 🚀 Deploy Laravel via SSH
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: SSH Deploy Script
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.SERVER }} << 'EOF'
+            cd repositories/moen-electric
+
+            echo "Pulling latest code..."
+            git pull origin production
+
+            echo "Installing dependencies..."
+            composer install --no-dev --optimize-autoloader
+
+            echo "Running Laravel commands..."
+            php artisan config:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            php artisan migrate --force
+
+            echo "Creating storage symlink if not exists..."
+            [ -L public/storage ] || php artisan storage:link
+
+            echo "Deployment finished!"
+          EOF
