@@ -1,0 +1,161 @@
+:root {
+    /* Variabel CSS untuk kemudahan perubahan warna dan ukuran */
+    --primary-red: #ff6b6b; /* Bisa diganti warna lain untuk 500 jika diinginkan */
+    --primary-blue: #74b9ff;
+    --dark-blue: #0984e3;
+    --light-bg: #f0f4f8;
+    --card-bg: #ffffff;
+    --text-dark: #333;
+    --text-medium: #555;
+    --border-color: #ddd;
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --button-shadow: rgba(0, 0, 0, 0.1);
+    --button-hover-shadow: rgba(0, 0, 0, 0.2);
+}
+
+body {
+    font-family: 'Poppins', sans-serif; /* Menggunakan Poppins sebagai font utama */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    background-color: var(--light-bg);
+    color: var(--text-dark);
+    text-align: center;
+    overflow: hidden; /* Mencegah scroll yang tidak diinginkan */
+    padding: 20px; /* Padding untuk mencegah konten menempel di tepi pada layar kecil */
+    box-sizing: border-box; /* Pastikan padding tidak menambah lebar */
+}
+
+.container {
+    background-color: var(--card-bg);
+    padding: 40px 30px; /* Padding yang cukup untuk kerapian */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px var(--shadow-light);
+    max-width: 500px; /* Batasan lebar maksimum untuk tampilan desktop */
+    width: 100%; /* Akan memenuhi lebar yang tersedia hingga max-width */
+    position: relative;
+    border: 1px solid var(--border-color); /* Border lebih halus */
+    box-sizing: border-box; /* Termasuk padding dan border dalam lebar */
+}
+
+h1 {
+    font-size: 5rem; /* Ukuran besar untuk 500 */
+    margin-bottom: 0px;
+    color: var(--primary-red); /* Bisa disesuaikan warnanya untuk 500 */
+    text-shadow: 2px 2px 4px var(--shadow-light);
+    font-weight: 700; /* Lebih tebal */
+    line-height: 1; /* Hapus spasi ekstra */
+}
+
+h2 {
+    font-size: 1.8rem;
+    color: var(--text-medium);
+    margin-top: 5px;
+    margin-bottom: 25px; /* Spasi setelah sub-judul */
+    font-weight: 600; /* Lebih tebal */
+}
+
+.lottie-animation {
+    max-width: 250px; /* Ukuran default dari HTML Anda */
+    width: 80vw; /* Lebar relatif terhadap viewport */
+    height: auto; /* Jaga rasio aspek */
+    display: block; /* Agar margin auto berfungsi */
+    margin: 0 auto 30px auto; /* Margin bawah untuk spasi dari teks */
+}
+
+p.message { /* Menggunakan class 'message' */
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 15px; /* Spasi antar paragraf */
+    color: var(--text-dark);
+}
+
+a.button-home { /* Styling untuk tombol link */
+    display: inline-flex; /* Untuk menata ikon dan teks */
+    align-items: center;
+    gap: 8px; /* Jarak antara ikon dan teks */
+    
+    background-color: var(--primary-blue);
+    color: white;
+    padding: 12px 28px; /* Padding yang nyaman */
+    border: none;
+    border-radius: 50px; /* Bentuk pil */
+    font-size: 1.1rem;
+    font-weight: 600;
+    text-decoration: none; /* Hilangkan garis bawah link */
+    cursor: pointer;
+    
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 10px var(--button-shadow); /* Bayangan tombol */
+    margin-top: 25px; /* Spasi di atas tombol */
+}
+
+a.button-home:hover {
+    background-color: var(--dark-blue); /* Warna lebih gelap saat hover */
+    transform: translateY(-3px); /* Efek angkat */
+    box-shadow: 0 6px 15px var(--button-hover-shadow); /* Bayangan saat hover lebih kuat */
+}
+
+a.button-home:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 5px var(--button-shadow);
+}
+
+.button-icon {
+    font-size: 1.3rem;
+}
+
+/* --- Media Queries untuk Responsivitas --- */
+
+@media (max-width: 600px) {
+    .container {
+        padding: 30px 20px; /* Kurangi padding pada layar kecil */
+    }
+
+    h1 {
+        font-size: 4rem; /* Kurangi ukuran font h1 */
+    }
+
+    h2 {
+        font-size: 1.5rem; /* Kurangi ukuran font h2 */
+    }
+
+    .lottie-animation {
+        max-width: 200px; /* Sesuaikan ukuran Lottie lebih lanjut */
+        width: 70vw;
+    }
+
+    p.message {
+        font-size: 1rem; /* Kurangi ukuran font paragraf */
+    }
+
+    a.button-home {
+        padding: 10px 20px; /* Kurangi padding tombol */
+        font-size: 1rem; /* Kurangi ukuran font tombol */
+    }
+
+    .button-icon {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .container {
+        padding: 25px 15px; /* Padding lebih kecil lagi */
+    }
+
+    h1 {
+        font-size: 3.5rem;
+    }
+
+    h2 {
+        font-size: 1.3rem;
+    }
+    
+    .lottie-animation {
+        max-width: 150px;
+        width: 60vw;
+    }
+}
