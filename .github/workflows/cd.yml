@@ -1,43 +1,54 @@
-name: 🚀 Deploy Laravel via SSH
+name: Deploy via SSH to CPanel
 
 on:
   push:
     branches:
-      - production
+      - main
 
 jobs:
   deploy:
+    name: Deploy to CPanel via SSH
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.4
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        tools: composer
 
-      - name: SSH Deploy Script
-        run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.USERNAME }}@${{ secrets.SERVER }} << 'EOF'
-            cd repositories/moen-electric
+    - name: Install Composer dependencies
+      run: composer install --no-dev --optimize-autoloader
 
-            echo "Pulling latest code..."
-            git pull origin production
+    - name: Build frontend assets
+      run: |
+        npm install
+        npm run build
 
-            echo "Installing dependencies..."
-            composer install --no-dev --optimize-autoloader
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-            echo "Running Laravel commands..."
-            php artisan config:clear
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan migrate --force
+    - name: Deploy using rsync over SSH
+      run: |
+        rsync -az --delete \
+        --exclude=".git*" \
+        --exclude="node_modules" \
+        --exclude="vendor" \
+        ./ ${{ secrets.USERNAME }}@${{ secrets.SERVER }}:/home/lxrapdcy/repositories/moen-electric/
 
-            echo "Creating storage symlink if not exists..."
-            [ -L public/storage ] || php artisan storage:link
-
-            echo "Deployment finished!"
-          EOF
+   
+    - name: Run Laravel commands on server
+      run: |
+        ssh ${{ secrets.USERNAME }}@${{ secrets.SERVER }} << 'EOF'
+        cd /home/lxrapdcy/repositories/moen-electric
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        php artisan migrate --force
+        php artisan storage:link
+        EOF
