@@ -1,54 +1,105 @@
-name: Deploy to CPanel
+name: Deploy Laravel to cPanel
 
 on:
   push:
-    branches:
-      - production
+    branches: [ production ]
+  pull_request:
+    branches: [ production ]
 
 jobs:
   deploy:
-    name: Deploy to CPanel
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
+    
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
       with:
-        php-version: '8.2'
-        tools: composer
-
+        php-version: '8.1'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+    
     - name: Install Composer dependencies
-      run: composer install --no-dev --optimize-autoloader
-
-    - name: Build frontend assets
+      run: composer install --no-progress --no-suggest --no-interaction --prefer-dist --optimize-autoloader
+    
+    - name: Create .env file
       run: |
-        npm install
-        npm run build
-
-    - name: Setup SSH Agent
-      uses: webfactory/ssh-agent@v0.5.4
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Deploy using rsync
+        cp .env.example .env
+        php artisan key:generate
+    
+    - name: Run tests
       run: |
-        rsync -az --delete \
-        --exclude=".git*" \
-        --exclude="node_modules" \
-        --exclude="vendor" \
-        ./ ${{ secrets.USERNAME }}@${{ secrets.SERVER }}:/home/lxrapdcy/public_html/
-
-   
-    - name: Run Laravel commands on server
-      run: |
-        ssh ${{ secrets.USERNAME }}@${{ secrets.SERVER }} << 'EOF'
-        cd /home/lxrapdcy/repositories/moen-electric
         php artisan config:cache
         php artisan route:cache
         php artisan view:cache
-        php artisan migrate --force
-        php artisan storage:link
-        EOF
+        # php artisan test # uncomment jika ada tests
+    
+    - name: Deploy to cPanel via FTP
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          tests/
+          .env.example
+          .gitignore
+          .github/
+          README.md
+          package*.json
+          webpack.mix.js
+          artisan
+          **/.DS_Store
+    
+    - name: Setup environment and permissions via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          cd /home/lxrapdcy/public_html
+          
+          # Set proper permissions
+          find . -type f -exec chmod 644 {} \;
+          find . -type d -exec chmod 755 {} \;
+          chmod -R 775 storage
+          chmod -R 775 bootstrap/cache
+          
+          # Remove old storage link if exists
+          if [ -L "public/storage" ]; then
+            rm public/storage
+          fi
+          
+          # Create symbolic link for storage
+          php artisan storage:link
+          
+          # Verify storage link created
+          if [ ! -L "public/storage" ]; then
+            ln -s ../storage/app/public public/storage
+          fi
+          
+          # Clear and cache config
+          php artisan config:clear
+          php artisan cache:clear
+          php artisan view:clear
+          php artisan route:clear
+          
+          # Cache for production
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          
+          # Run migrations if needed
+          # php artisan migrate --force
+          
+          # Fix storage permissions again after storage:link
+          chmod -R 775 storage
+          chmod -R 775 public/storage
