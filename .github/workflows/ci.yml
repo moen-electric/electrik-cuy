@@ -25,32 +25,32 @@ jobs:
           --health-retries=5
 
     steps:
-      - name: ⬇️ Checkout Code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: ⚙️ Setup PHP
+      - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
           extensions: mbstring, pdo, mysql, fileinfo
 
-      - name: 📦 Install Composer Dependencies
+      - name: Install Composer Dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 
-      - name: 📝 Copy .env.testing
+      - name: Copy .env.testing
         run: cp .env.testing .env
 
-      - name: 🔑 Generate App Key
+      - name: Generate App Key
         run: php artisan key:generate
 
-      - name: ⏱ Wait for MySQL
+      - name: MySQL
         run: |
           until mysqladmin ping -h 127.0.0.1 -uroot -proot --silent; do
             echo "Waiting for MySQL..."
             sleep 2
           done
 
-      - name: 🧬 Run Migrations
+      - name: Run Migrations
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
@@ -60,7 +60,7 @@ jobs:
           DB_PASSWORD: root
         run: php artisan migrate --force
 
-      - name: 🧪 Run Tests
+      - name: Run Tests
         env:
           DB_CONNECTION: mysql
           DB_HOST: 127.0.0.1
