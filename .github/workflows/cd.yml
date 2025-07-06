@@ -3,7 +3,7 @@ name: Deploy via SSH to CPanel
 on:
   push:
     branches:
-      - main
+      - production
 
 jobs:
   deploy:
