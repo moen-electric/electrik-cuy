@@ -1,63 +1,44 @@
-name: Deploy Laravel to cPanel (FTP Only)
+name: Deploy Laravel to cPanel via FTP
 
 on:
   push:
-    branches: [ production ]
+    branches:
+      - production
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Deploy to cPanel via FTP
-      uses: SamKirkland/FTP-Deploy-Action@4.3.3
-      with:
-        server: ${{ secrets.SERVER }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        local-dir: ./
-        server-dir: /public_html/
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          **/vendor/**
-          tests/
-          .env.example
-          .gitignore
-          .github/
-          README.md
-          package*.json
-          webpack.mix.js
-          **/.DS_Store
-          composer.lock
-    
-    - name: Create deployment info file
-      uses: SamKirkland/FTP-Deploy-Action@4.3.3
-      with:
-        server: ${{ secrets.SERVER }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        local-dir: ./
-        server-dir: /public_html/
-        exclude: |
-          **/*
-        include: |
-          deployment-info.txt
-        dry-run: false
-      env:
-        DEPLOYMENT_INFO: |
-          Deployment completed at: $(date)
-          Please run the following commands manually in cPanel Terminal:
-          
-          cd /home/lxrapdcy/public_html
-          composer install --no-dev --optimize-autoloader
-          php artisan storage:link
-          php artisan config:cache
-          php artisan route:cache
-          php artisan view:cache
-          chmod -R 775 storage
-          chmod -R 775 public/storage
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, bcmath, curl, dom, fileinfo, openssl, pdo, tokenizer, xml
+          tools: composer
+
+      - name: Install PHP dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Setup Laravel Storage Link
+        run: |
+          php artisan config:clear
+          php artisan route:clear
+          php artisan view:clear
+          php artisan storage:link || echo "Symlink might already exist"
+
+      - name: Build assets (if using Laravel Mix / Vite)
+        run: |
+          npm install
+          npm run build
+
+      - name: FTP Deploy to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          server: ${{ secrets.SERVER }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          server-dir: /public_html/ # sesuaikan jika di subdomain misalnya /sub.my.id/
