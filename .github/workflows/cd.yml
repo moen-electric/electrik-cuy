@@ -1,4 +1,4 @@
-name: Deploy via SSH to CPanel
+name: Deploy to CPanel
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to CPanel via SSH
+    name: Deploy to CPanel
     runs-on: ubuntu-latest
 
     steps:
@@ -28,27 +28,17 @@ jobs:
         npm install
         npm run build
 
-    - name: Setup SSH Agent
-      uses: webfactory/ssh-agent@v0.5.4
+    - name: Simulate `php artisan storage:link`
+      run: |
+          rm -rf public/storage
+          mkdir -p public/storage
+          cp -r storage/app/public/* public/storage/ || echo "No public storage content"
+
+    - name: FTP Deploy
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
       with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-    - name: Deploy using rsync
-      run: |
-        rsync -az --delete \
-        --exclude=".git*" \
-        --exclude="node_modules" \
-        --exclude="vendor" \
-        ./ ${{ secrets.USERNAME }}@${{ secrets.SERVER }}:/home/lxrapdcy/public_html/
-
-   
-    - name: Run Laravel commands on server
-      run: |
-        ssh ${{ secrets.USERNAME }}@${{ secrets.SERVER }} << 'EOF'
-        cd /home/lxrapdcy/repositories/moen-electric
-        php artisan config:cache
-        php artisan route:cache
-        php artisan view:cache
-        php artisan migrate --force
-        php artisan storage:link
-        EOF
+          server: ${{ secrets.SERVER }}
+          username: ${{ secrets.USERNAME }}
+          password: ${{ secrets.PASSWORD }}
+          local-dir: ./
+          server-dir: public_html/
