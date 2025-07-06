@@ -1,0 +1,63 @@
+/* public/css/404.css */
+
+/* Desain Umum */
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif; /* Pastikan font ini dimuat dari Google Fonts */
+    background-color: #f8f8f8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    text-align: center;
+    color: #333;
+    overflow: hidden; /* Penting untuk mencegah scrollbar */
+}
+
+.container {
+    z-index: 1; /* Pastikan konten di atas elemen latar belakang */
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); /* Efek bayangan elegan */
+    max-width: 500px;
+    width: 90%; /* Responsif untuk ukuran layar kecil */
+}
+
+/* Styling untuk Animasi Lottie (kucing) */
+.lottie-animation {
+    width: 250px; /* Lebar animasi */
+    height: 250px; /* Tinggi animasi */
+    margin: 0 auto 30px auto; /* Pusat animasi dan beri jarak bawah */
+    cursor: pointer; /* Indikator bahwa elemen bisa diklik */
+}
+
+/* Styling untuk Teks dan Tombol */
+h1 {
+    font-size: 4em; /* Ukuran besar untuk '404' */
+    margin-bottom: 10px;
+    color: #ff6f61; /* Warna merah muda cerah */
+}
+
+p {
+    font-size: 1.2em;
+    line-height: 1.6;
+    margin-bottom: 30px;
+}
+
+.button-home {
+    display: inline-block;
+    padding: 12px 28px;
+    background-color: #007bff; /* Warna biru standar */
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Efek transisi saat hover */
+    font-weight: bold;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3); /* Bayangan tombol */
+}
+
+.button-home:hover {
+    background-color: #0056b3; /* Warna biru lebih gelap saat hover */
+    transform: translateY(-2px); /* Sedikit naik saat hover */
+}
