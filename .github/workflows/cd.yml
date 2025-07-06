@@ -28,18 +28,18 @@ jobs:
         npm install
         npm run build
 
-    - name: Setup SSH
+    - name: Setup SSH Agent
       uses: webfactory/ssh-agent@v0.5.4
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: Deploy using rsync over SSH
+    - name: Deploy using rsync
       run: |
         rsync -az --delete \
         --exclude=".git*" \
         --exclude="node_modules" \
         --exclude="vendor" \
-        ./ ${{ secrets.USERNAME }}@${{ secrets.SERVER }}:/home/lxrapdcy/repositories/moen-electric/
+        ./ ${{ secrets.USERNAME }}@${{ secrets.SERVER }}:/home/lxrapdcy/public_html/
 
    
     - name: Run Laravel commands on server
