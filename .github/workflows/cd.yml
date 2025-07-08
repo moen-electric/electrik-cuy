@@ -1,44 +1,105 @@
-name: Deploy Laravel to cPanel via FTP
+name: Deploy Laravel to cPanel
 
 on:
   push:
-    branches:
-      - production
+    branches: [ production ]
+  pull_request:
+    branches: [ production ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.2'
-          extensions: mbstring, bcmath, curl, dom, fileinfo, openssl, pdo, tokenizer, xml
-          tools: composer
-
-      - name: Install PHP dependencies
-        run: composer install --no-dev --optimize-autoloader
-
-      - name: Setup Laravel Storage Link
-        run: |
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_mysql, dom, filter, gd, iconv, json, mbstring, pdo
+    
+    - name: Install Composer dependencies
+      run: composer install --no-progress --no-suggest --no-interaction --prefer-dist --optimize-autoloader
+    
+    - name: Create .env file
+      run: |
+        cp .env.example .env
+        php artisan key:generate
+    
+    - name: Run tests
+      run: |
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+        # php artisan test # uncomment jika ada tests
+    
+    - name: Deploy to cPanel via FTP
+      uses: SamKirkland/FTP-Deploy-Action@4.3.3
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          tests/
+          .env.example
+          .gitignore
+          .github/
+          README.md
+          package*.json
+          webpack.mix.js
+          artisan
+          **/.DS_Store
+    
+    - name: Setup environment and permissions via SSH
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USERNAME }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          cd /home/lxrapdcy/public_html
+          
+          # Set proper permissions
+          find . -type f -exec chmod 644 {} \;
+          find . -type d -exec chmod 755 {} \;
+          chmod -R 775 storage
+          chmod -R 775 bootstrap/cache
+          
+          # Remove old storage link if exists
+          if [ -L "public/storage" ]; then
+            rm public/storage
+          fi
+          
+          # Create symbolic link for storage
+          php artisan storage:link
+          
+          # Verify storage link created
+          if [ ! -L "public/storage" ]; then
+            ln -s ../storage/app/public public/storage
+          fi
+          
+          # Clear and cache config
           php artisan config:clear
-          php artisan route:clear
+          php artisan cache:clear
           php artisan view:clear
-          php artisan storage:link || echo "Symlink might already exist"
-
-      - name: Build assets (if using Laravel Mix / Vite)
-        run: |
-          npm install
-          npm run build
-
-      - name: FTP Deploy to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@4.3.3
-        with:
-          server: ${{ secrets.SERVER }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
-          server-dir: /public_html/ # sesuaikan jika di subdomain misalnya /sub.my.id/
+          php artisan route:clear
+          
+          # Cache for production
+          php artisan config:cache
+          php artisan route:cache
+          php artisan view:cache
+          
+          # Run migrations if needed
+          # php artisan migrate --force
+          
+          # Fix storage permissions again after storage:link
+          chmod -R 775 storage
+          chmod -R 775 public/storage
